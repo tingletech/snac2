@@ -2,16 +2,17 @@
 
 // directory to troll
 def data_root = "/home/btingle/rebuild/xtf/data"
+// def data_root = "test2"
 
 // XTF Base URL used in inner loop to look up authorized form of name
 def xtf_base = "http://socialarchive.iath.virginia.edu/xtf/search?raw=1&sectionType="
 
 // create graph
-g = new Neo4jGraph('snac-graph')
+g = new Neo4jGraph('snac-graph-2')
 
 // we'll need this index later
 index = g.createIndex('name-idx',Vertex.class,Index.Type.AUTOMATIC)
-index.addAutoIndexKey("name")
+index.addAutoIndexKey("identity")
 
 def dir = new File(data_root)
 
@@ -19,11 +20,17 @@ def dir = new File(data_root)
 dir.eachFile{file->
   def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
   // xpath: /eac-cpf/cpfDescription/identity[1]/nameEntry/part
-  def from_name = eac.cpfDescription.identity[0].nameEntry[0].part
+  def fromName = eac.cpfDescription.identity[0].nameEntry[0].part
+  def entityType = eac.cpfDescription.identity[0].entityType
+  def existDates = eac.cpfDescription.description[0].existDates
+  // def urls = ''
+  // eac.cpfDescription.relations.resourceRelation."@xlink:href".each { urls = urls + it; urls = urls + "\n" }
   Vertex vertex = g.addVertex(null)
-  assert ( vertex["name"] = from_name as String)
-  vertex["file"] = file as String
-  println vertex["name"]
+  vertex["identity"] = fromName as String
+  vertex["entityType"] = entityType as String
+  if (existDates != '') { vertex["existDates"] = existDates as String }
+  // vertex["urls"] = urls as String
+  println vertex["identity"]
 }
 
 // second loop; create the edges
@@ -32,7 +39,7 @@ dir.eachFile{file->
   // first, get then vertex for this file
   def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
   def from_name = eac.cpfDescription.identity[0].nameEntry[0].part
-  def from_node = index.get("name", from_name as String)>>1
+  def from_node = index.get("identity", from_name as String)>>1
   // now, process all related names
   eac.cpfDescription.relations.cpfRelation.each {
     // parse the recordId out of the descriptiveNote
@@ -50,7 +57,7 @@ dir.eachFile{file->
     }
     // get the vertex to connect to
     def to_node
-    def to_node_iterator = index.get("name", to_name as String)
+    def to_node_iterator = index.get("identity", to_name as String)
     if ( to_node_iterator ) { 
       to_node = to_node_iterator.next()
     }
@@ -64,4 +71,5 @@ dir.eachFile{file->
     println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId} ${where}"
   }
 }
+GraphMLWriter.outputGraph(g, new FileOutputStream('data/graph-snac-example.xml'))
 g.shutdown()
