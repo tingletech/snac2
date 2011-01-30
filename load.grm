@@ -1,0 +1,67 @@
+// groovy / gremlin script to load EAC-CPF relations into a graph database
+
+// directory to troll
+def data_root = "/home/btingle/rebuild/xtf/data"
+
+// XTF Base URL used in inner loop to look up authorized form of name
+def xtf_base = "http://socialarchive.iath.virginia.edu/xtf/search?raw=1&sectionType="
+
+// create graph
+g = new Neo4jGraph('snac-graph')
+
+// we'll need this index later
+index = g.createIndex('name-idx',Vertex.class,Index.Type.AUTOMATIC)
+index.addAutoIndexKey("name")
+
+def dir = new File(data_root)
+
+// first loop; define vertex for each name
+dir.eachFile{file->
+  def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
+  // xpath: /eac-cpf/cpfDescription/identity[1]/nameEntry/part
+  def from_name = eac.cpfDescription.identity[0].nameEntry[0].part
+  Vertex vertex = g.addVertex(null)
+  assert ( vertex["name"] = from_name as String)
+  vertex["file"] = file as String
+  println vertex["name"]
+}
+
+// second loop; create the edges
+dir.eachFile{file->
+  // for each file
+  // first, get then vertex for this file
+  def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
+  def from_name = eac.cpfDescription.identity[0].nameEntry[0].part
+  def from_node = index.get("name", from_name as String)>>1
+  // now, process all related names
+  eac.cpfDescription.relations.cpfRelation.each {
+    // parse the recordId out of the descriptiveNote
+    String p = it.descriptiveNote.p
+    def recordId = p[10..p.size()-1] // so hackish
+    // look up by recordId: first
+    def crossQueryResult = new XmlSlurper().parse("${xtf_base}control&text=${recordId}")
+    def to_name = crossQueryResult.docHit[0].meta.identity[0]
+    def where = "recordId"
+    // no luck with recordId?  do a search of the identity sectionType!
+    if ( to_name == '') {
+      crossQueryResult = new XmlSlurper().parse("${xtf_base}identity&text=${it.relationEntry}")
+      to_name = crossQueryResult.docHit[0].meta.identity[0]
+      where = "identity"
+    }
+    // get the vertex to connect to
+    def to_node
+    def to_node_iterator = index.get("name", to_name as String)
+    if ( to_node_iterator ) { 
+      to_node = to_node_iterator.next()
+    }
+    // we'll need to know the edge type 
+    def arcrole = it."@xlink:arcrole"
+    if ( from_node && to_node && arcrole && (from_node != to_node) ) {
+      def e = g.addEdge(null, from_node, to_node, arcrole as String)
+    } else {
+      print "SKIPPED "
+    }
+    println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId} ${where}"
+  }
+}
+g.shutdown()
