@@ -1,0 +1,20 @@
+// groovy / gremlin script to load EAC-CPF relations into a graph database
+
+def env = System.getenv()
+
+def database_path = env['GRAPH_DB'] ?: "./neo4j-db"
+
+def graphML = env['GRAPH_ML'] ?: "./graph-snac-example.xml"
+
+// create graph
+def g = new Neo4jGraph(database_path)
+
+// define the index
+indexKeys = new HashSet()
+indexKeys.add("identity")
+index = g.createAutomaticIndex('name-idx', Vertex.class, indexKeys)
+
+// read the graphML file into the graph 
+GraphMLReader.inputGraph(g, new FileInputStream(graphML))
+
+g.shutdown()
