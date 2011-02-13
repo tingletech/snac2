@@ -1,16 +1,23 @@
 // groovy / gremlin script to load EAC-CPF relations into a graph database
 
+def env = System.getenv()
+
 // directory to troll
-def data_root = "/home/btingle/rebuild/xtf/data"
-// def data_root = "test2"
+def data_root = env['EAC_DIR'] ?: "./data"
 
 // XTF Base URL used in inner loop to look up authorized form of name
-def xtf_base = "http://socialarchive.iath.virginia.edu/xtf/search?raw=1&sectionType="
+def xtf_base = env['XTF_BASE_URL'] ?: "http://socialarchive.iath.virginia.edu/xtf/search?raw=1&sectionType="
+
+def database_path = env['GRAPH_DB'] ?: "./neo4j-db"
+
+def graphML = env['GRAPH_ML'] ?: "./graph-snac-example.xml"
 
 // create graph
-g = new Neo4jGraph('snac-graph-2')
+def g = new Neo4jGraph(database_path)
 
 // we'll need this index later
+// will need to migrate to immutable auto key syntax
+// http://groups.google.com/group/gremlin-users/browse_thread/thread/620f71fa6a37f8bb
 index = g.createIndex('name-idx',Vertex.class,Index.Type.AUTOMATIC)
 index.addAutoIndexKey("identity")
 
@@ -22,14 +29,15 @@ dir.eachFile{file->
   // xpath: /eac-cpf/cpfDescription/identity[1]/nameEntry/part
   def fromName = eac.cpfDescription.identity[0].nameEntry[0].part
   def entityType = eac.cpfDescription.identity[0].entityType
-  def existDates = eac.cpfDescription.description[0].existDates
-  // def urls = ''
-  // eac.cpfDescription.relations.resourceRelation."@xlink:href".each { urls = urls + it; urls = urls + "\n" }
+  // def existDates = eac.cpfDescription.description[0].existDates
+  def urls = ''
+  eac.cpfDescription.relations.resourceRelation."@xlink:href".each { urls = urls + it; urls = urls + "\n" }
+  def urlsArray = urls.split("\n")
   Vertex vertex = g.addVertex(null)
   vertex["identity"] = fromName as String
   vertex["entityType"] = entityType as String
-  if (existDates != '') { vertex["existDates"] = existDates as String }
-  // vertex["urls"] = urls as String
+  // if (existDates != '') { vertex["existDates"] = existDates as String }
+  vertex["urls"] = urls
   println vertex["identity"]
 }
 
@@ -71,5 +79,5 @@ dir.eachFile{file->
     println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId} ${where}"
   }
 }
-GraphMLWriter.outputGraph(g, new FileOutputStream('data/graph-snac-example.xml'))
+GraphMLWriter.outputGraph(g, new FileOutputStream(graphML))
 g.shutdown()
