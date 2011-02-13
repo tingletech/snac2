@@ -16,10 +16,9 @@ def graphML = env['GRAPH_ML'] ?: "./graph-snac-example.xml"
 def g = new Neo4jGraph(database_path)
 
 // we'll need this index later
-// will need to migrate to immutable auto key syntax
-// http://groups.google.com/group/gremlin-users/browse_thread/thread/620f71fa6a37f8bb
-index = g.createIndex('name-idx',Vertex.class,Index.Type.AUTOMATIC)
-index.addAutoIndexKey("identity")
+indexKeys = new HashSet()
+indexKeys.add("identity")
+index = g.createAutomaticIndex('name-idx', Vertex.class, indexKeys)
 
 def dir = new File(data_root)
 
