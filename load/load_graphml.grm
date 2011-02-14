@@ -6,6 +6,9 @@ def database_path = env['GRAPH_DB'] ?: "./neo4j-db"
 
 def graphML = env['GRAPH_ML'] ?: "./graph-snac-example.xml"
 
+File src = new File(graphML)
+if (!(src.exists()) ){ println graphML + " not found"; System.exit(1) }
+
 // create graph
 def g = new Neo4jGraph(database_path)
 

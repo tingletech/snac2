@@ -12,6 +12,10 @@ def database_path = env['GRAPH_DB'] ?: "./neo4j-db"
 
 def graphML = env['GRAPH_ML'] ?: "./graph-snac-example.xml"
 
+// does the input even exist ?
+def dir = new File(data_root)
+if (!(dir.exists()) ){ println data_root + " not found"; System.exit(1) }
+
 // create graph
 def g = new Neo4jGraph(database_path)
 
@@ -20,7 +24,6 @@ indexKeys = new HashSet()
 indexKeys.add("identity")
 index = g.createAutomaticIndex('name-idx', Vertex.class, indexKeys)
 
-def dir = new File(data_root)
 
 // first loop; define vertex for each name
 dir.eachFile{file->
