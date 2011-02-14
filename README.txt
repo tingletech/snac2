@@ -13,8 +13,10 @@ Data files
 
 defaults can be changed by setting environmental variables
 
-data 			- EAC_DIR  - symbolic link to EAC files
-graph-snac-example.xml	- GRAPH_ML - graphML file
+(default)		- (ENV_VAR) - (notes)
+data 			- EAC_DIR  - symbolic link to EAC files (load_eac.grm)
+graph-snac-example.xml	- GRAPH_ML - graphML file to read (load_graphml.grm)
+					or write (load_eac.grm)
 neo4j-db 		- GRAPH_DB - neo4j database created by load_*.grm scripts
 
 Setup Gremlin
@@ -32,10 +34,10 @@ Load scripts
 ------------
 
 ./gremlin.sh -e load/load_eac.grm	
-	process EAC_DIR and creates GRAPH_ML and GRAPH_DB
+	reads each file in EAC_DIR and creates GRAPH_ML and GRAPH_DB
 
 ./gremlin.sh -e load/load_graphml.grm 	
-	process GRAPH_ML and creates GRAPH_DB
+	reads GRAPH_ML and creates GRAPH_DB
 
 Run Gremlin
 -----------
