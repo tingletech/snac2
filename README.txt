@@ -37,6 +37,47 @@ Load scripts
 ./gremlin.sh -e load/load_graphml.grm 	
 	process GRAPH_ML and creates GRAPH_DB
 
+Run Gremlin
+-----------
+
+./gremlin.sh
+
+         \,,,/
+         (o o)
+-----oOOo-(_)-oOOo-----
+gremlin> g = new Neo4jGraph("neo4j-db")
+==>neo4jgraph[EmbeddedGraphDatabase [neo4j-db]]
+gremlin> g.V.count()
+==>124152
+gremlin> g.E.count()
+==>245367
+
+gremlin> results = g.idx(T.v)[[identity:'Bush, Vannevar, 1890-1974.']]
+==>v[61472]
+gremlin> print results                                                     
+com.tinkerpop.blueprints.pgm.impls.neo4j.util.Neo4jVertexSequence@76c7cadf==>null
+
+gremlin> results = g.idx(T.v).get("identity", "Bush, Vannevar, 1890-1974.")>>1
+==>v[61472]
+gremlin> print results
+v[61472]==>null
+
+gremlin> results = idx.get("identity", Neo4jTokens.QUERY_HEADER+"Franklin*Ben*")._.identity
+==>Franklin, Benjamin, 1706-1790.
+==>Franklin, Benjamin.
+
+gremlin> g.shutdown()
+==>null
+gremlin> exit
+
+x = []
+g.v(61472).outE.inV.aggregate(x).outE.inV.except(x).unique._.identity
+
+See also 
+	- https://github.com/tinkerpop/gremlin/wiki
+	- https://github.com/tinkerpop/gremlin/wiki/Learning-Dependencies
+
+
 License
 -------
 
