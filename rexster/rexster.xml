@@ -13,14 +13,14 @@
         <graph>
             <graph-name>gratefulgraph</graph-name>
             <graph-type>com.tinkerpop.rexster.config.TinkerGraphGraphConfiguration</graph-type>
-            <graph-file>data/graph-example-2.xml</graph-file>
+            <graph-file>/home/snac/graph-data/data/graph-example-2.xml</graph-file>
             <packages-allowed>grateful</packages-allowed>
         </graph>
         <graph>
             <graph-enabled>true</graph-enabled>
             <graph-name>snac</graph-name>
             <graph-type>neo4jgraph</graph-type>
-            <graph-file>./neo4j-db/</graph-file>
+            <graph-file>/home/snac/graph-data/neo4j-db/</graph-file>
             <packages-allowed></packages-allowed>
             <properties>
                 <!-- Memory mapped I/O settings -->
