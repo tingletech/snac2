@@ -1,8 +1,8 @@
 eac-load-graph
 ==============
 
-a process to create a directed, attributed, edge-labeled, multi-graph [1] of
-social networks derived from processing archival context records [2]
+a process to create a directed, attributed, edge-labeled, multi-graph [1]
+of social networks derived from processing archival context records [2]
 
 [1] http://engineering.attinteractive.com/2010/12/a-graph-processing-stack/
 
@@ -11,13 +11,28 @@ social networks derived from processing archival context records [2]
 Data files
 ----------
 
-defaults can be changed by setting environmental variables
+Merged EAC records or a graphML XML file can be used to create the
+neo4j database.  
 
-(default)		- (ENV_VAR) - (notes)
-data 			- EAC_DIR  - symbolic link to EAC files (load_eac.grm)
-graph-snac-example.xml	- GRAPH_ML - graphML file to read (load_graphml.grm)
-					or write (load_eac.grm)
-neo4j-db 		- GRAPH_DB - neo4j database created by load_*.grm scripts
+EAC_DIR	- directory of EAC-CPF http://eac.staatsbibliothek-berlin.de/  records
+	input to load_eac.grm
+
+GRAPH_ML - a graphML http://graphml.graphdrawing.org/ file
+	output from load_eac.grm; input to load_graphml.grm
+
+GRAPH_DB  - neo4j database file
+	output from load_eac.grm and load_graphml.grm; input to rexster
+
+
+Environment Variable Defaults
+-----------------------------
+
+defaults are set as if
+
+export EAC_DIR=./data			   
+export GRAPH_ML=./graph-snac-example.xml   
+export GRAPH_DB=./neo4j-db		   
+
 
 Setup Gremlin
 -------------
@@ -79,15 +94,29 @@ See also
 	- https://github.com/tinkerpop/gremlin/wiki
 	- https://github.com/tinkerpop/gremlin/wiki/Learning-Dependencies
 
+Rexster
+-------
+
+see rexster/README.txt
+
 Graph Schema
 ------------
 
 vertex properties:  
-	identity: the name of the entity  
+	_id: auto-assigned by neo4j
+	_type: vertex
+	identity: the name of the entity (string)
 	urls: \n seperated list of source EAD files  
         entityType: 'corporateBody', 'family', or 'person'
 
-edge lables: 'correspondedWith' or 'associatedWith'
+edge properties:
+	_id: auto-assigned by neo4j
+	_type: edge
+	_lable: 'correspondedWith' or 'associatedWith'
+	_inV: incoming vertex (from)
+	_outV: outgoing vertex (to)
+	from_name: from identity (string) denormalized
+	to_name: to identity (string) denormalized
 
 License
 -------

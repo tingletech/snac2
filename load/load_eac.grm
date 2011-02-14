@@ -75,6 +75,8 @@ dir.eachFile{file->
     def arcrole = it."@xlink:arcrole"
     if ( from_node && to_node && arcrole && (from_node != to_node) ) {
       def e = g.addEdge(null, from_node, to_node, arcrole as String)
+      e["to_name"] = to_name as String
+      e["from_name"] = from_name as String
     } else {
       print "SKIPPED "
     }
