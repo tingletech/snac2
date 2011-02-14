@@ -77,6 +77,15 @@ See also
 	- https://github.com/tinkerpop/gremlin/wiki
 	- https://github.com/tinkerpop/gremlin/wiki/Learning-Dependencies
 
+Graph Schema
+------------
+
+vertex properties:  
+	identity: the name of the entity  
+	urls: \n seperated list of source EAD files  
+        entityType: 'corporateBody', 'family', or 'person'
+
+edge lables: 'correspondedWith' or 'associatedWith'
 
 License
 -------
