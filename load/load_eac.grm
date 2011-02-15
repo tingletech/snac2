@@ -25,7 +25,7 @@ indexKeys.add("identity")
 index = g.createAutomaticIndex('name-idx', Vertex.class, indexKeys)
 
 
-// first loop; define vertex for each name
+// first loop; define vertex for each name / EAC file
 dir.eachFile{file->
   def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
   // xpath: /eac-cpf/cpfDescription/identity[1]/nameEntry/part
@@ -45,43 +45,59 @@ dir.eachFile{file->
 
 // second loop; create the edges
 dir.eachFile{file->
-  // for each file
+
   // first, get then vertex for this file
   def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
   def from_name = eac.cpfDescription.identity[0].nameEntry[0].part
   def from_node = index.get("identity", from_name as String)>>1
+
   // now, process all related names
   eac.cpfDescription.relations.cpfRelation.each {
+
     // parse the recordId out of the descriptiveNote
     String p = it.descriptiveNote.p
     def recordId = p[10..p.size()-1] // so hackish
+
     // look up by recordId: first
     def crossQueryResult = new XmlSlurper().parse("${xtf_base}control&text=${recordId}")
     def to_name = crossQueryResult.docHit[0].meta.identity[0]
     def where = "recordId"
+
     // no luck with recordId?  do a search of the identity sectionType!
     if ( to_name == '') {
       crossQueryResult = new XmlSlurper().parse("${xtf_base}identity&text=${it.relationEntry}")
       to_name = crossQueryResult.docHit[0].meta.identity[0]
       where = "identity"
     }
+
     // get the vertex to connect to
     def to_node
     def to_node_iterator = index.get("identity", to_name as String)
     if ( to_node_iterator ) { 
       to_node = to_node_iterator.next()
     }
+
     // we'll need to know the edge type 
     def arcrole = it."@xlink:arcrole"
+
+    // we we can creat an edge; then do so
     if ( from_node && to_node && arcrole && (from_node != to_node) ) {
       def e = g.addEdge(null, from_node, to_node, arcrole as String)
+
+      // and add some properties to the edge
       e["to_name"] = to_name as String
       e["from_name"] = from_name as String
+
+    // no match found
     } else {
       print "SKIPPED "
     }
     println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId} ${where}"
   }
 }
+
+// output a graphML file 
 GraphMLWriter.outputGraph(g, new FileOutputStream(graphML))
+
+// neo4j likes to be shutdown graceful like
 g.shutdown()
