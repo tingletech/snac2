@@ -12,7 +12,7 @@ Which should generate:
     eac.ttl
 
 It uses the FOAF and Relationship vocabularies, as well as a stub EAC
-vocabulary.
+vocabulary for Family and associatedWith.
 """
 
 import sys
@@ -35,10 +35,11 @@ def main(graphml_file):
     parse(graphml_file, handler)
 
     # output it as turtle and rdf/xml
-    graph.serialize(file("eac.rdf", format="xml"))
-    graph.serialize(file("eac.ttl", format="turtle"))
     graph.bind("rel", REL)
     graph.bind("foaf", FOAF)
+    graph.bind("eac", EAC)
+    graph.serialize(file("eac.rdf", "w"), format="xml")
+    graph.serialize(file("eac.ttl", "w"), format="turtle")
     graph.close()
 
 
@@ -67,7 +68,7 @@ class GraphMLHandler(ContentHandler):
                 self.graph.add((s, rdflib.RDF.type, FOAF.Person))
                 self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
             elif n['entityType'] == 'family':
-                self.graph.add((s, rdflib.RDF.type, FOAF.Family))
+                self.graph.add((s, rdflib.RDF.type, EAC.Family))
                 self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
             elif n['entityType'] == 'corporateBody':
                 self.graph.add((s, rdflib.RDF.type, FOAF.Organization))
@@ -96,9 +97,9 @@ class GraphMLHandler(ContentHandler):
         if not self.key:
             return
         elif self.node:
-            self.node[self.key] = content
+            self.node[self.key] = self.node.get(self.key, "") + content
         elif self.edge:
-            self.edge[self.key] = content 
+            self.edge[self.key] = self.edge.get(self.key, "") + content
 
 
 def snac_url(name):
