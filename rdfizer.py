@@ -85,10 +85,14 @@ class GraphMLHandler(ContentHandler):
             print "%s -> %s" % (s, o)
             # TODO: make sure these exist?
             if self.edge['label'] == 'correspondedWith':
+                # make it symmetrical without having to do inferencing
                 self.graph.add((s, REL['collaboratesWith'], o))
+                self.graph.add((o, REL['collaboratesWith'], s))
             elif self.edge['label'] in ['associatedWith', 'associateWith']:
                 # TODO: what does associatedWith mean?
+                # TODO: ok that it is symmetrical?
                 self.graph.add((s, EAC['associatedWith'], o))
+                self.graph.add((o, EAC['associatedWith'], s))
 
         elif name == 'data':
             self.key = None
