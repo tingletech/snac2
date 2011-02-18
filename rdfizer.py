@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
 """
-This experimental script will convert the EAC graphml dump to RDF 
-(xml, turtle) using rdflib: 
+This experimental script will convert the EAC graphml dump to rdf/xml
+using rdflib (which you will need to have installed).
 
     % rdfizer.py graph-snac-example.xml
 
 Which should generate:
 
     eac.rdf
-    eac.ttl
 
 It uses the FOAF [1] and Arch [2] vocabularies.
 
@@ -39,7 +38,6 @@ def main(graphml_file):
     graph.bind("arch", ARCH)
     graph.bind("foaf", FOAF)
     graph.serialize(file("eac.rdf", "w"), format="xml")
-    graph.serialize(file("eac.ttl", "w"), format="turtle")
     graph.close()
 
 
@@ -76,9 +74,13 @@ class GraphMLHandler(ContentHandler):
                 self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
             if n['urls']:
                 for u in n['urls'].replace('\n', ' ').split(' '):
+                    u = u.strip()
+                    if not u:
+                        continue
                     coll = rdflib.URIRef(u)
-                    self.graph.add((s, ARCH.primaryProvenanceOf, coll))
+                    self.graph.add((coll, rdflib.RDF.type, ARCH.Collection))
                     self.graph.add((coll, ARCH.hasProvenance, s))
+                    self.graph.add((s, ARCH.primaryProvenanceOf, coll))
             print self.node['identity']
             self.node = None
 
