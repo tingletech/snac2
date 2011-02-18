@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 """
-This script will convert the EAC graphml dump to RDF (xml, turtle) using rdflib: 
+This experimental script will convert the EAC graphml dump to RDF 
+(xml, turtle) using rdflib: 
+
     % rdfizer.py graph-snac-example.xml
 
 Which should generate:
@@ -9,8 +11,10 @@ Which should generate:
     eac.rdf
     eac.ttl
 
-It uses the FOAF and Relationship vocabularies, as well as a stub EAC
-vocabulary for Family and associatedWith.
+It uses the FOAF [1] and Arch [2] vocabularies.
+
+[1] http://xmlns.com/foaf/spec/
+[2] http://gslis.simmons.edu/archival/arch
 """
 
 import sys
@@ -20,8 +24,7 @@ from xml.sax import parse
 from xml.sax.handler import ContentHandler
 
 FOAF = rdflib.Namespace("http://xmlns.com/foaf/0.1/")
-REL = rdflib.Namespace("http://purl.org/vocab/relationship/")
-EAC = rdflib.Namespace("http://socialarchive.iath.virginia.edu/ns#")
+ARCH = rdflib.Namespace("http://purl.org/archival/vocab/arch#")
 
 def main(graphml_file):
     # create rdflib berkeleydb graph to populate
@@ -33,9 +36,8 @@ def main(graphml_file):
     parse(graphml_file, handler)
 
     # output it as turtle and rdf/xml
-    graph.bind("rel", REL)
+    graph.bind("arch", ARCH)
     graph.bind("foaf", FOAF)
-    graph.bind("eac", EAC)
     graph.serialize(file("eac.rdf", "w"), format="xml")
     graph.serialize(file("eac.ttl", "w"), format="turtle")
     graph.close()
@@ -64,16 +66,19 @@ class GraphMLHandler(ContentHandler):
             s = snac_url(self.node['identity'])
             if n['entityType'] == 'person':
                 self.graph.add((s, rdflib.RDF.type, FOAF.Person))
+                # TODO: massage heading into a real name?
                 self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
             elif n['entityType'] == 'family':
-                self.graph.add((s, rdflib.RDF.type, EAC.Family))
+                self.graph.add((s, rdflib.RDF.type, ARCH.Family))
                 self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
             elif n['entityType'] == 'corporateBody':
                 self.graph.add((s, rdflib.RDF.type, FOAF.Organization))
                 self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
             if n['urls']:
                 for u in n['urls'].replace('\n', ' ').split(' '):
-                    self.graph.add((s, FOAF.isPrimaryTopicOf, rdflib.URIRef(u)))
+                    coll = rdflib.URIRef(u)
+                    self.graph.add((s, ARCH.primaryProvenanceOf, coll))
+                    self.graph.add((coll, ARCH.hasProvenance, s))
             print self.node['identity']
             self.node = None
 
@@ -84,13 +89,12 @@ class GraphMLHandler(ContentHandler):
             # TODO: make sure these exist?
             if self.edge['label'] == 'correspondedWith':
                 # make it symmetrical without having to do inferencing
-                self.graph.add((s, REL['collaboratesWith'], o))
-                self.graph.add((o, REL['collaboratesWith'], s))
+                self.graph.add((s, ARCH['correspondedWith'], o))
+                self.graph.add((o, ARCH['correspondedWith'], s))
             elif self.edge['label'] in ['associatedWith', 'associateWith']:
-                # TODO: what does associatedWith mean?
-                # TODO: ok that it is symmetrical?
-                self.graph.add((s, EAC['associatedWith'], o))
-                self.graph.add((o, EAC['associatedWith'], s))
+                # TODO: is this an ok interpretation?
+                self.graph.add((s, ARCH['appearsWith'], o))
+                self.graph.add((o, ARCH['appearsWith'], s))
 
         elif name == 'data':
             self.key = None
