@@ -4,3 +4,4 @@ gremlin/*			# git repo of gremlin
 neo4j-db/*			# neo4j database
 graph-snac-example.xml		# too big for revision control
 .gremlin_history		# gremlin history
+store                           # rdflib berkeleydb store
