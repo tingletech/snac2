@@ -74,7 +74,7 @@ class GraphMLHandler(ContentHandler):
                 self.graph.add((s, rdflib.RDF.type, FOAF.Organization))
                 self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
             if n['urls']:
-                for u in n['urls'].split(' '):
+                for u in n['urls'].replace('\n', ' ').split(' '):
                     self.graph.add((s, FOAF.isPrimaryTopicOf, rdflib.URIRef(u)))
             print self.node['identity']
             self.node = None
