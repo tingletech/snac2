@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
 """
-This script will convert the EAC graphml dump to RDF (xml, turtle, ntriples)
-using rdflib: 
-
+This script will convert the EAC graphml dump to RDF (xml, turtle) using rdflib: 
     % rdfizer.py graph-snac-example.xml
 
 Which should generate:
