@@ -61,9 +61,9 @@ class GraphMLHandler(ContentHandler):
 
     def endElement(self, name):
 
-        if name == 'node':
+        if name == 'node' and self.node['identity']:
             n = self.node
-            s = snac_url(self.node['identity'])
+            s = snac_url(n['identity'])
             if n['entityType'] == 'person':
                 self.graph.add((s, rdflib.RDF.type, FOAF.Person))
                 # TODO: massage heading into a real name?
@@ -76,10 +76,12 @@ class GraphMLHandler(ContentHandler):
                 self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
             if n['urls']:
                 for u in n['urls'].replace('\n', ' ').split(' '):
+                    if not u:
+                        continue
                     coll = rdflib.URIRef(u)
                     self.graph.add((s, ARCH.primaryProvenanceOf, coll))
                     self.graph.add((coll, ARCH.hasProvenance, s))
-            print self.node['identity']
+            print n['identity']
             self.node = None
 
         elif name == 'edge':
