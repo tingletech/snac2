@@ -24,7 +24,7 @@ def main():
         g.open("store")
         for s, o in g.subject_objects(FOAF.name):
             add_viaf(g, s, unicode(o))
-            time.sleep(5)
+            time.sleep(2)
     finally:
         g.close()
 
@@ -39,9 +39,14 @@ def add_viaf(g, s, name):
 
 
 def viaf(q):
-    q = q.encode('utf-8')
-    url = "http://viaf.org/viaf/AutoSuggest?" + urllib.urlencode({"query": q})
-    return json.loads(urllib.urlopen(url).read())["result"]
+    try:
+        q = urllib.urlencode({"query": q.encode('utf-8')})
+        url = "http://viaf.org/viaf/AutoSuggest?" + q
+        return json.loads(urllib.urlopen(url).read())["result"]
+    except Exception, e:
+        print e
+        return
+
 
 
 if __name__ == "__main__":
