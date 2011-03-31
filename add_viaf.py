@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 
 """
-Adds owl:sameAs links to VIAF using VIAF's autosuggest service. A link
-is only put in where there is one unambiguous hit. Mainly just to 
-demonstrate the usefulness of using the VIAF identifiers if they are 
-known.
+Adds owl:sameAs links to VIAF using the VIAF link found in the HTML
+at socialarchive.iath.virginia.edu. This is kind of a hack, considering
+the dumped data could include the VIAF URI, but it's just a proof
+of concept, so I guess it's bearable. &shrug;
 """
 
-import json
 import time
 import urllib
+import logging
+
+from xml.etree import ElementTree
 
 import rdflib
 
@@ -21,33 +23,34 @@ DCTERMS = rdflib.Namespace("http://purl.org/dc/terms/")
 def main():
     g = rdflib.ConjunctiveGraph("Sleepycat")
     try:
+        count = 0
         g.open("store")
-        for s, o in g.subject_objects(FOAF.name):
-            add_viaf(g, s, unicode(o))
-            time.sleep(2)
+        for s in g.subjects(rdflib.RDF.type, FOAF.Person):
+            count += 1
+            if count <= 4885:
+                continue
+            viaf_uri = viaf(s)
+            if viaf_uri:
+                g.add((s, OWL.sameAs, viaf_uri)) 
+                logging.info("%s has viaf uri: %s" % (s, viaf_uri))
+            time.sleep(1)
     finally:
         g.close()
 
 
-def add_viaf(g, s, name):
-    hits = viaf(name)
-    if hits and len(hits) == 1:
-        if hits[0].has_key('viafid'):
-            u = "http://viaf.org/viaf/%s/#foaf:Person" % hits[0]['viafid']
-            g.add((s, OWL.sameAs, rdflib.URIRef(u)))
-            print u
-
-
-def viaf(q):
-    try:
-        q = urllib.urlencode({"query": q.encode('utf-8')})
-        url = "http://viaf.org/viaf/AutoSuggest?" + q
-        return json.loads(urllib.urlopen(url).read())["result"]
-    except Exception, e:
-        print e
-        return
-
+def viaf(s):
+    """scrape viaf uri from snac html
+    """
+    doc = ElementTree.parse(urllib.urlopen(s.encode("utf-8")))
+    for a in doc.findall('.//a'):
+        if a.attrib['href'].startswith('http://viaf.org'):
+            return rdflib.URIRef("%s/#foaf:Person" % a.attrib['href'])
+    logging.warn("unable to lookup viaf URI for %s" % s)
+    return None
 
 
 if __name__ == "__main__":
+    logging.basicConfig(filename="add_viaf.log", 
+                        format="%(asctime)s - %(levelname)s - %(message)s", 
+                        level=logging.INFO)
     main()

@@ -111,8 +111,7 @@ class GraphMLHandler(ContentHandler):
 
 
 def snac_url(name):
-    name = name.replace(',', '')
-    name = name.replace('.', '')
+    name = re.sub(r'[,.-()]', '', name)
     name = name.replace(' ', '+')
     u = "http://socialarchive.iath.virginia.edu/xtf/view?docId=%s-cr.xml" % name
     return rdflib.URIRef(u)
