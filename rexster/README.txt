@@ -1,3 +1,11 @@
+
+rexster.0.2.xml is the old one
+rexster.0.4.xml works with SNAPSHOT-0.5
+
+extension also needs to get built now
+
+---- old ----
+
 set up rexster
 
 git clone https://github.com/tinkerpop/rexster.git
