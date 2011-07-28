@@ -34,9 +34,12 @@ public class ThroughStreet extends AbstractRexsterExtension {
         // put information for the center vertex
         result.put("this", JSONWriter.createJSONElement(v));
 
-        // put counts of neighbors
-        result.put("correspondedWithCount", v.out('correspondedWith').uniqueObject().count());
-        result.put("associatedWithCount", v.out('associatedWith').uniqueObject().count());
+        // precompute. .out(...).uniqueObject().count()
+        // for ( z in g.V ) { z.correspondedWithCount = z.out('correspondedWith').uniqueObject().count(); 
+        //                    z.associatedWithCount = z.out('associatedWith').uniqueObject().count() 
+        // } ... 
+        // result.put("correspondedWithCount", v.out('correspondedWith').uniqueObject().count());
+        // result.put("associatedWithCount", v.out('associatedWith').uniqueObject().count());
 
         // snac schema change:
         // for (z in g.V ) { z.score = z.out.count() }  <-- add a new pre-computation
