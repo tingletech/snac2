@@ -49,7 +49,7 @@ public class ThroughStreet extends AbstractRexsterExtension {
         def counter = 0;
         for( 
             def vertex : 
-            v.out('correspondedWith').uniqueObject().sort{-it.score}
+            v.both('correspondedWith').uniqueObject().sort{-it.score}
         ) { 
             counter ++; if (counter > 50) { break; } 
             correspondedWith.put(JSONWriter.createJSONElement(vertex,properties,false));
@@ -60,7 +60,7 @@ public class ThroughStreet extends AbstractRexsterExtension {
         for( 
             def vertex : 
             // v.out('associatedWith').unique().sort{it.out.count()}.reverse() 
-            v.out('associatedWith').uniqueObject().sort{-it.score} 
+            v.both('associatedWith').uniqueObject().sort{-it.score} 
         ) { 
             counter ++; if (counter > 50) { break; } 
             associatedWith.put(JSONWriter.createJSONElement(vertex,properties,false));
