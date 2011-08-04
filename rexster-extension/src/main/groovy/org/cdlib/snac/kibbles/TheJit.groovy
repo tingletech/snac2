@@ -23,48 +23,44 @@ public class TheJit extends AbstractRexsterExtension {
     public ExtensionResponse evaluate(@RexsterContext RexsterResourceContext context,
                                       @RexsterContext Vertex v) {
 
+        // JSON format http://thejit.org/static/v20/Docs/files/Loader/Loader-js.html
         JSONArray output = new JSONArray();
 
-        def counter = 0;
-        // first; build up the nodes that will show up on the graph
+        // popular graph neighbors get aggregated into this array
         def neighbors = [];
 
-        // using a for loop because that is the only thing you can break out of
-        for( def vertex : v.both.uniqueObject().sort{-it.score}) {
-            counter ++; if (counter > 50) { break; }
-            vertex._().aggregate(neighbors)>>-1;
-        }
+        // collect neighbors; sorted by "popularity"
+        // .score was precomputed with: for (z in g.V ) { z.score = z.out.count() }
+        v.out.uniqueObject.sort{-it.score}._()[0..49].aggregate(neighbors)>>-1;
 
+        // add JSON for the "center" node to the output array first
         output.put(buildNode(v, neighbors));
 
-        // now; gotta loop through the first 50 again        
-        counter = 0;
-        for( def vertex : v.both.uniqueObject().sort{-it.score}) {
-            counter ++; if (counter > 50) { break; }
-            output.put(buildNode(vertex, neighbors));
-        }
+        // for each popular graph neighbor; build neighbors JSON and add to output array
+        neighbors.each{ output.put(buildNode(it, neighbors)); }
 
         // return the results
         return new ExtensionResponse(Response.ok(output).build());
     }
 
-    // build array of adjacent nodes
-    private buildAdjacencies(vertex, neighbors) {
-          JSONArray collect = new JSONArray();
-          def self = [];
-          vertex._().aggregate(self)>>-1;
-          vertex.bothE.bothV.uniqueObject().retain(neighbors).except(self).each {
-            collect.put(it.id as String);
-          };
-          return collect;
-    }
-
     // build the JSON for the node
     private buildNode(vertex, neighbors) {
-            def node = new JSONObject();
-            node.put("id", vertex.id as String);
-            node.put("name", vertex.identity);
-            node.put("adjacencies", buildAdjacencies(vertex, neighbors));
-            return node;
+        def node = new JSONObject();
+        node.put("id", vertex.id as String);
+        node.put("name", vertex.identity);
+        node.put("adjacencies", buildAdjacencies(vertex, neighbors));
+        return node;
     }
+
+    // build array of adjacent nodes
+    private buildAdjacencies(vertex, neighbors) {
+        JSONArray collect = new JSONArray();
+        def self = [];
+        vertex._().aggregate(self)>>-1;
+        vertex.bothE.bothV.uniqueObject().retain(neighbors).except(self).each {
+            collect.put(it.id as String);
+        };
+        return collect;
+    }
+
 }
