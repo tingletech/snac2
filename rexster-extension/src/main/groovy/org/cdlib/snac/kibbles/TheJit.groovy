@@ -57,7 +57,7 @@ public class TheJit extends AbstractRexsterExtension {
         JSONArray collect = new JSONArray();
         def self = [];
         vertex._().aggregate(self)>>-1;
-        vertex.bothE.bothV.uniqueObject().retain(neighbors).except(self).each {
+        vertex.both.uniqueObject().retain(neighbors).except(self).each {
             collect.put(it.id as String);
         };
         return collect;
