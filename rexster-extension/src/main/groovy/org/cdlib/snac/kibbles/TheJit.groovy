@@ -1,5 +1,9 @@
 package org.cdlib.snac.kibbles;
 
+// The JSON this produces is used by this HMTL/js
+// http://code.google.com/p/xtf-cpf/source/browse/cpf2html/snac-jit.html?name=xtf-cpf
+// http://code.google.com/p/xtf-cpf/source/browse/cpf2html/snac-jit.js?name=xtf-cpf
+
 import com.tinkerpop.blueprints.pgm.Edge;
 import com.tinkerpop.blueprints.pgm.Graph;
 import com.tinkerpop.blueprints.pgm.Vertex;
