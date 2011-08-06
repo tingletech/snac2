@@ -1,6 +1,6 @@
 package org.cdlib.snac.kibbles;
 
-// The JSON this produces is used by this HMTL/js
+// The JSON this produces is used by this HTML/js
 // http://code.google.com/p/xtf-cpf/source/browse/cpf2html/snac-jit.html?name=xtf-cpf
 // http://code.google.com/p/xtf-cpf/source/browse/cpf2html/snac-jit.js?name=xtf-cpf
 
