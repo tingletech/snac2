@@ -1,5 +1,7 @@
 // groovy / gremlin script to load EAC-CPF relations into a graph database
 
+// set EAC_DIR XTF_BASE_URL GRAPH_DB GRAPH_ML
+
 def env = System.getenv()
 
 // directory to troll
@@ -31,15 +33,20 @@ dir.eachFile{file->
   // xpath: /eac-cpf/cpfDescription/identity[1]/nameEntry/part
   def fromName = eac.cpfDescription.identity[0].nameEntry[0].part
   def entityType = eac.cpfDescription.identity[0].entityType
+  def viafFunk = eac.control.otherRecordId.findAll{ it.@localType == 'VIAFId' }[0].text()
+  def viaf = viafFunk.replaceFirst(/VIAFId:/, "http://viaf.org/viaf/")
+    
   // def existDates = eac.cpfDescription.description[0].existDates
   def urls = ''
-  eac.cpfDescription.relations.resourceRelation."@xlink:href".each { urls = urls + it; urls = urls + "\n" }
+  eac.cpfDescription.relations.resourceRelation."@xlink:href".each {  urls = urls + it; urls = urls + "\n" }
   def urlsArray = urls.split("\n")
   Vertex vertex = g.addVertex(null)
+  vertex["filename"] = file.getName()
   vertex["identity"] = fromName as String
   vertex["entityType"] = entityType as String
   // if (existDates != '') { vertex["existDates"] = existDates as String }
   vertex["urls"] = urls
+  if (viaf != '') { vertex["viaf"] = viaf }
   println vertex["identity"]
 }
 
@@ -50,6 +57,7 @@ dir.eachFile{file->
   def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
   def from_name = eac.cpfDescription.identity[0].nameEntry[0].part
   def from_node = index.get("identity", from_name as String)>>1
+  def from_file = from_node.filename
 
   // now, process all related names
   eac.cpfDescription.relations.cpfRelation.each {
@@ -71,22 +79,26 @@ dir.eachFile{file->
     }
 
     // get the vertex to connect to
-    def to_node
-    def to_node_iterator = index.get("identity", to_name as String)
+    def to_node, to_file
+    to_node_iterator = index.get("identity", to_name as String)
     if ( to_node_iterator ) { 
       to_node = to_node_iterator.next()
+      to_file = to_node.filename
     }
 
     // we'll need to know the edge type 
     def arcrole = it."@xlink:arcrole"
 
-    // we we can creat an edge; then do so
+    // we we can create an edge; then do so
     if ( from_node && to_node && arcrole && (from_node != to_node) ) {
       def e = g.addEdge(null, from_node, to_node, arcrole as String)
 
       // and add some properties to the edge
       e["to_name"] = to_name as String
+      e["to_file"] = to_file as String
       e["from_name"] = from_name as String
+      e["from_file"] = from_file as String
+      e["pre_merge_record_id"] = recordId as String
 
     // no match found
     } else {
@@ -95,6 +107,10 @@ dir.eachFile{file->
     println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId} ${where}"
   }
 }
+
+println "compute popularity"
+// pre compute popularity score
+for (z in g.V ) { z.score = z.out.count() }
 
 // output a graphML file 
 GraphMLWriter.outputGraph(g, new FileOutputStream(graphML))

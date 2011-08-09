@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
 """
+http://inkdroid.org/journal/2011/03/31/snac-hacks/
+Ed Summers https://bitbucket.org/edsu
+"""
+
+"""
 Use the owl:sameAs assertions in the SNAC graph to create a new 
 graph oriented around VIAF URIs as subjects and objects.
 """

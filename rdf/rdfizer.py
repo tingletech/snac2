@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
 """
+http://inkdroid.org/journal/2011/03/31/snac-hacks/
+Ed Summers https://bitbucket.org/edsu
+"""
+
+"""
 This experimental script will convert the EAC graphml dump to rdf/xml
 using rdflib (which you will need to have installed).
 
@@ -24,6 +29,7 @@ from xml.sax.handler import ContentHandler
 
 FOAF = rdflib.Namespace("http://xmlns.com/foaf/0.1/")
 ARCH = rdflib.Namespace("http://purl.org/archival/vocab/arch#")
+OWL = rdflib.Namespace("http://www.w3.org/2002/07/owl#")
 
 def main(graphml_file):
     # create rdflib berkeleydb graph to populate
@@ -61,11 +67,14 @@ class GraphMLHandler(ContentHandler):
 
         if name == 'node':
             n = self.node
-            s = snac_url(self.node['identity'])
+            s = snac_url(n['filename'])
             if n['entityType'] == 'person':
                 self.graph.add((s, rdflib.RDF.type, FOAF.Person))
                 # TODO: massage heading into a real name?
+                # please don't, we put so much work putting them in inverted order :)
                 self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
+                if "viaf" in n:
+                    self.graph.add((s, OWL.sameAs, n['viaf']))
             elif n['entityType'] == 'family':
                 self.graph.add((s, rdflib.RDF.type, ARCH.Family))
                 self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
@@ -85,8 +94,8 @@ class GraphMLHandler(ContentHandler):
             self.node = None
 
         elif name == 'edge':
-            s = snac_url(self.edge['from_name'])
-            o = snac_url(self.edge['to_name'])
+            s = snac_url(self.edge['from_file'])
+            o = snac_url(self.edge['to_file'])
             print "%s -> %s" % (s, o)
             # TODO: make sure these exist?
             if self.edge['label'] == 'correspondedWith':
@@ -111,9 +120,7 @@ class GraphMLHandler(ContentHandler):
 
 
 def snac_url(name):
-    name = re.sub(r'[,.-()]', '', name)
-    name = name.replace(' ', '+')
-    u = "http://socialarchive.iath.virginia.edu/xtf/view?docId=%s-cr.xml" % name
+    u = "http://socialarchive.iath.virginia.edu/xtf/view?docId=%s-cr.xml#entity" % name
     return rdflib.URIRef(u)
 
 

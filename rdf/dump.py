@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+"""
+http://inkdroid.org/journal/2011/03/31/snac-hacks/
+Ed Summers https://bitbucket.org/edsu
+"""
+
 import rdflib
 
 graph = rdflib.Graph("Sleepycat", rdflib.URIRef("http://viaf.org"))
