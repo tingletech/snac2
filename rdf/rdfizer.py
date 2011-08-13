@@ -68,28 +68,46 @@ class GraphMLHandler(ContentHandler):
         if name == 'node':
             n = self.node
             s = snac_url(n['filename'])
+            self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
             if n['entityType'] == 'person':
                 self.graph.add((s, rdflib.RDF.type, FOAF.Person))
                 # TODO: massage heading into a real name?
-                # please don't, we put so much work putting them in inverted order :)
-                self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
-                if "viaf" in n:
-                    self.graph.add((s, OWL.sameAs, n['viaf']))
+                # please don't, we put so much work putting them in inverted order
+                # :)
+                # don't trust VIAF/dbpedia links for names that are only
+                # one word long (no " ") because they are generally dubious
+                if " " in n['identity']
+                    if "viaf" in n
+                        self.graph.add((s, OWL.sameAs, n['viaf']))
+                    if "dbpedia" in n
+                        self.graph.add((s, OWL.sameAs, n['dbpedia']))
             elif n['entityType'] == 'family':
                 self.graph.add((s, rdflib.RDF.type, ARCH.Family))
-                self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
             elif n['entityType'] == 'corporateBody':
                 self.graph.add((s, rdflib.RDF.type, FOAF.Organization))
-                self.graph.add((s, FOAF.name, rdflib.Literal(n['identity'])))
-            if n['urls']:
-                for u in n['urls'].replace('\n', ' ').split(' '):
+            # links to collections this person created
+            if "creatorOf" in n:
+                for u in n['creatorOf'].replace('\n', ' ').split(' '):
                     u = u.strip()
                     if not u:
                         continue
+                    u = u + "#Collection"
                     coll = rdflib.URIRef(u)
                     self.graph.add((coll, rdflib.RDF.type, ARCH.Collection))
                     self.graph.add((coll, ARCH.hasProvenance, s))
                     self.graph.add((s, ARCH.primaryProvenanceOf, coll))
+            # links to collections this person in mentioned in
+            if "associatedWith" in n:
+                for u in n['associatedWith'].replace('\n', ' ').split(' '):
+                    u = u.strip()
+                    if not u:
+                        continue
+                    u = u + "#Collection"
+                    coll = rdflib.URIRef(u)
+                    self.graph.add((coll, rdflib.RDF.type, ARCH.Collection))
+                    # TODO: does this need a recriprical relationship?
+                    # self.graph.add((coll, ARCH.hasProvenance, s))
+                    self.graph.add((s, ARCH.referencedIn, coll))
             print self.node['identity']
             self.node = None
 
@@ -97,13 +115,14 @@ class GraphMLHandler(ContentHandler):
             s = snac_url(self.edge['from_file'])
             o = snac_url(self.edge['to_file'])
             print "%s -> %s" % (s, o)
-            # TODO: make sure these exist?
+            # TODO: make sure these exist?; pretty sure it will
             if self.edge['label'] == 'correspondedWith':
                 # make it symmetrical without having to do inferencing
                 self.graph.add((s, ARCH['correspondedWith'], o))
                 self.graph.add((o, ARCH['correspondedWith'], s))
             elif self.edge['label'] in ['associatedWith', 'associateWith']:
-                # TODO: is this an ok interpretation?
+                # done: is this an ok interpretation?
+                # yes, checked with @rubinsztajn
                 self.graph.add((s, ARCH['appearsWith'], o))
                 self.graph.add((o, ARCH['appearsWith'], s))
 
@@ -120,11 +139,10 @@ class GraphMLHandler(ContentHandler):
 
 
 def snac_url(name):
-    u = "http://socialarchive.iath.virginia.edu/xtf/view?docId=%s-cr.xml#entity" % name
+    u = "http://socialarchive.iath.virginia.edu/xtf/view?docId=%s#entity" % name
     return rdflib.URIRef(u)
 
 
 if __name__ == "__main__":
     filename = sys.argv[1]
     main(filename)
-

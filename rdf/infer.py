@@ -34,20 +34,20 @@ def add(t):
         viaf_graph.add(new_t)
 
 
-for snac_uri, viaf_uri in snac_graph.subject_objects(predicate=OWL.sameAs):
+for snac_uri, other_uri in snac_graph.subject_objects(predicate=OWL.sameAs):
 
     if not snac_uri.startswith("http://socialarchive.iath.virginia.edu"):
         continue
 
-    if not viaf_uri.startswith("http://viaf.org"):
+    if not ( other_uri.startswith("http://viaf.org") or other_uri.startswith("http://dbpedia") ):
         continue
 
-    viaf_graph.add((viaf_uri, OWL.sameAs, snac_uri))
+    viaf_graph.add((other_uri, OWL.sameAs, snac_uri))
 
     for s, p, o in snac_graph.triples((snac_uri, None, None)):
-        add((viaf_uri, p, o))
+        add((other_uri, p, o))
 
     for s, p, o in snac_graph.triples((None, None, snac_uri)):
-        add((s, p, viaf_uri))
+        add((s, p, other_uri))
 
 

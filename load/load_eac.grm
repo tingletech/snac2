@@ -35,19 +35,33 @@ dir.eachFile{file->
   def entityType = eac.cpfDescription.identity[0].entityType
   def viafFunk = eac.control.otherRecordId.findAll{ it.@localType == 'VIAFId' }[0].text()
   def viaf = viafFunk.replaceFirst(/VIAFId:/, "http://viaf.org/viaf/")
+  def dbpedia = eac.control.otherRecordId.findAll{ it.@localType == 'dbpedia' }[0].text()
+  dbpedia = dbpedia.replaceFirst(/dbpedia:/, "")
     
   // def existDates = eac.cpfDescription.description[0].existDates
-  def urls = ''
-  eac.cpfDescription.relations.resourceRelation."@xlink:href".each {  urls = urls + it; urls = urls + "\n" }
-  def urlsArray = urls.split("\n")
+  def creatorOf = ''
+  def referencedIn = ''
+  // I happen to know only xlink:role="archivalRecords" have xlink:href's right now
+  eac.cpfDescription.relations.resourceRelation.findAll { it."@xlink:href" != '' }.each {  
+    if (it."@xlink:arcrole" == "creatorOf") {
+      creatorOf = creatorOf + it."@xlink:href" + "\n"
+    }
+    if (it."@xlink:arcrole" == "referencedIn") {
+      referencedIn = referencedIn + it."@xlink:href" + "\n"
+    }
+  }
   Vertex vertex = g.addVertex(null)
   vertex["filename"] = file.getName()
   vertex["identity"] = fromName as String
   vertex["entityType"] = entityType as String
+  // there has got to be a better way?
   // if (existDates != '') { vertex["existDates"] = existDates as String }
-  vertex["urls"] = urls
-  if (viaf != '') { vertex["viaf"] = viaf }
-  println vertex["identity"]
+  if (creatorOf != '')     { vertex["creatorOf"]  = creatorOf }
+  if (referencedIn != '')  { vertex["referencedIn"]  = referencedIn }
+  if (viaf != '')          { vertex["viaf"]  = viaf }
+  if (dbpedia != '')       { vertex["dbpedia"] = dbpedia as String }
+  print vertex["identity"]
+  println vertex
 }
 
 // second loop; create the edges
@@ -102,7 +116,8 @@ dir.eachFile{file->
 
     // no match found
     } else {
-      print "SKIPPED "
+      print "SKIPPED"
+      print "${from_node}|${from_file}|${to_node}|${to_file}|${arcrole}"
     }
     println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId} ${where}"
   }
