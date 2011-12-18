@@ -43,6 +43,7 @@ def main(graphml_file):
     # output it as turtle and rdf/xml
     graph.bind("arch", ARCH)
     graph.bind("foaf", FOAF)
+    # 'n3', 'turtle', 'nt', 'pretty-xml', trix'
     graph.serialize(file("eac.rdf", "w"), format="xml")
     graph.close()
 
@@ -76,10 +77,10 @@ class GraphMLHandler(ContentHandler):
                 # :)
                 # don't trust VIAF/dbpedia links for names that are only
                 # one word long (no " ") because they are generally dubious
-                if " " in n['identity']
-                    if "viaf" in n
+                if " " in n['identity']:
+                    if "viaf" in n:
                         self.graph.add((s, OWL.sameAs, n['viaf']))
-                    if "dbpedia" in n
+                    if "dbpedia" in n:
                         self.graph.add((s, OWL.sameAs, n['dbpedia']))
             elif n['entityType'] == 'family':
                 self.graph.add((s, rdflib.RDF.type, ARCH.Family))
