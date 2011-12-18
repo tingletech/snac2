@@ -21,11 +21,13 @@ if (!(dir.exists()) ){ println data_root + " not found"; System.exit(1) }
 // create graph
 def g = new Neo4jGraph(database_path)
 
-// we'll need this index later
+// we'll need this index later; autoindex incantation
 indexKeys = new HashSet()
 indexKeys.add("identity")
 index = g.createAutomaticIndex('name-idx', Vertex.class, indexKeys)
 
+// created manual index for "related items" api
+sourceEADurlIndex = g.createManualIndex('sourceEADurlIndex', Vertex.class)
 
 // first loop; define vertex for each name / EAC file
 dir.eachFile{file->
@@ -56,12 +58,23 @@ dir.eachFile{file->
   vertex["entityType"] = entityType as String
   // there has got to be a better way?
   // if (existDates != '') { vertex["existDates"] = existDates as String }
-  if (creatorOf != '')     { vertex["creatorOf"]  = creatorOf }
-  if (referencedIn != '')  { vertex["referencedIn"]  = referencedIn }
+  if (creatorOf != '')     { 
+    vertex["creatorOf"]  = creatorOf 
+    creatorOf.tokenize("\n").each {
+      sourceEADurlIndex.put("creatorOf", it, vertex)
+    }
+  }
+  if (referencedIn != '')  { 
+    vertex["referencedIn"]  = referencedIn 
+    referencedIn.tokenize("\n").each {
+      sourceEADurlIndex.put("referencedIn", it, vertex)
+    }
+  }
   if (viaf != '')          { vertex["viaf"]  = viaf }
   if (dbpedia != '')       { vertex["dbpedia"] = dbpedia as String }
   print vertex["identity"]
   println vertex
+
 }
 
 // second loop; create the edges
@@ -125,7 +138,10 @@ dir.eachFile{file->
 
 println "compute popularity"
 // pre compute popularity score
-for (z in g.V ) { z.score = z.out.count() }
+for (z in g.V ) { 
+  z.score = z.out.count() 
+  print "${z.score}."
+}
 
 // output a graphML file 
 GraphMLWriter.outputGraph(g, new FileOutputStream(graphML))
