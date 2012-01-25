@@ -7,8 +7,8 @@ import com.tinkerpop.rexster.extension.*;
 import com.tinkerpop.rexster.RexsterResourceContext;
 import org.codehaus.jettison.json.JSONObject;
 import org.codehaus.jettison.json.JSONArray;
-import com.tinkerpop.blueprints.pgm.util.json.JSONWriter;
-import com.tinkerpop.gremlin.Gremlin;
+import com.tinkerpop.blueprints.pgm.util.json.GraphSONWriter;
+import com.tinkerpop.gremlin.groovy.Gremlin;
 
 @ExtensionNaming(namespace = "snac", name = "mostAssociated")
 public class ThroughStreet extends AbstractRexsterExtension {
@@ -32,7 +32,7 @@ public class ThroughStreet extends AbstractRexsterExtension {
         JSONArray correspondedWith = new JSONArray();
 
         // put information for the center vertex
-        result.put("this", JSONWriter.createJSONElement(v));
+        result.put("this", GraphSONWriter.createJSONElement(v));
 
         // precompute. .out(...).uniqueObject().count()
         // for ( z in g.V ) { z.correspondedWithCount = z.out('correspondedWith').uniqueObject().count(); 
@@ -52,7 +52,7 @@ public class ThroughStreet extends AbstractRexsterExtension {
             v.both('correspondedWith').uniqueObject().sort{-it.score}
         ) { 
             counter ++; if (counter > 50) { break; } 
-            correspondedWith.put(JSONWriter.createJSONElement(vertex,properties,false));
+            correspondedWith.put(GraphSONWriter.createJSONElement(vertex,properties,false));
         }
 
         // get the first 50 most "popular" associated names
@@ -63,7 +63,7 @@ public class ThroughStreet extends AbstractRexsterExtension {
             v.both('associatedWith').uniqueObject().sort{-it.score} 
         ) { 
             counter ++; if (counter > 50) { break; } 
-            associatedWith.put(JSONWriter.createJSONElement(vertex,properties,false));
+            associatedWith.put(GraphSONWriter.createJSONElement(vertex,properties,false));
         }
 
         // put the neighbors

@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 set -eu
 which mvn git
 git clone http://github.com/tinkerpop/gremlin.git

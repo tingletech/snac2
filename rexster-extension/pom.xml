@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.cdlib</groupId>
     <artifactId>snac-kibbles</artifactId>
-    <version>0.5-SNAPSHOT</version>
+    <version>0.8-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>http://socialarchive.iath.virginia.edu/</url>
     <name>Rexster Extensions for the SNAC project</name>
@@ -25,12 +25,12 @@ blah blah blah
         <dependency>
             <groupId>com.tinkerpop.blueprints</groupId>
             <artifactId>blueprints-core</artifactId>
-            <version>0.9-SNAPSHOT</version>
+            <version>1.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.tinkerpop</groupId>
             <artifactId>rexster</artifactId>
-            <version>0.5-SNAPSHOT</version>
+            <version>0.8-SNAPSHOT</version>
         </dependency>
         <!-- CONFIGURATION -->
         <dependency>

@@ -11,8 +11,8 @@ import com.tinkerpop.rexster.extension.*;
 import com.tinkerpop.rexster.RexsterResourceContext;
 import org.codehaus.jettison.json.JSONObject;
 import org.codehaus.jettison.json.JSONArray;
-import com.tinkerpop.blueprints.pgm.util.json.JSONWriter;
-import com.tinkerpop.gremlin.Gremlin;
+// import com.tinkerpop.blueprints.pgm.util.json.GraphSONWriter;
+import com.tinkerpop.gremlin.groovy.Gremlin;
 import javax.ws.rs.core.Response;
 
 @ExtensionNaming(namespace = "snac", name = "theJit")
