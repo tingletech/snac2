@@ -20,4 +20,25 @@ index = g.createAutomaticIndex('name-idx', Vertex.class, indexKeys)
 // read the graphML file into the graph 
 GraphMLReader.inputGraph(g, new FileInputStream(graphML))
 
+println "manual indexes"
+
+// created manual index for "related items" api
+sourceEADurlIndex = g.createManualIndex('sourceEADurlIndex', Vertex.class)
+
+// need to recreate indexes that graphML won't hold
+for (z in g.V ) {
+  co = z["creatorOf"]
+  if (co) {
+    co.tokenize("\n").each {
+      sourceEADurlIndex.put("creatorOf", it, z) 
+    }
+  }
+  ri = z["referencedIn"]
+  if (ri) {
+    ri.tokenize("\n").each {
+      sourceEADurlIndex.put("referencedIn", it, z) 
+    }
+  }
+}
+
 g.shutdown()
