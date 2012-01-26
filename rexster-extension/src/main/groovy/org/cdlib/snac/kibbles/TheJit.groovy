@@ -35,7 +35,7 @@ public class TheJit extends AbstractRexsterExtension {
 
         // collect neighbors; sorted by "popularity"
         // .score was precomputed with: for (z in g.V ) { z.score = z.out.count() }
-        v.out.uniqueObject.sort{-it.score}._()[0..49].aggregate(neighbors)>>-1;
+        v.out.dedup.sort{-it.score}._()[0..49].aggregate(neighbors).iterate();
 
         // add JSON for the "center" node to the output array first
         output.put(buildNode(v, neighbors));
@@ -60,8 +60,8 @@ public class TheJit extends AbstractRexsterExtension {
     private buildAdjacencies(vertex, neighbors) {
         JSONArray collect = new JSONArray();
         def self = [];
-        vertex._().aggregate(self)>>-1;
-        vertex.both.uniqueObject().retain(neighbors).except(self).each {
+        vertex.aggregate(self).iterate();
+        vertex.both.dedup().retain(neighbors).except(self).each {
             collect.put(it.id as String);
         };
         return collect;
