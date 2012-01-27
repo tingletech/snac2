@@ -9,5 +9,5 @@ if [ -z "$MY_PATH" ] ; then
 fi
 cd "$MY_PATH"
 cd ../jena-joseki/
-./bin/tdbload --loc ../eac.tdb ../20110815-graphML+rdf/eac.rdf
-./bin/tdbload --loc ../snac-viaf.tdb ../20110815-graphML+rdf/snac-viaf.rdf
+./bin/tdbload --loc ../eac.tdb $MY_PATH/eac.rdf
+./bin/tdbload --loc ../snac-viaf.tdb $MY_PATH/snac-viaf.rdf
