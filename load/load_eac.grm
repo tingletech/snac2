@@ -22,12 +22,10 @@ if (!(dir.exists()) ){ println data_root + " not found"; System.exit(1) }
 def g = new Neo4jGraph(database_path)
 
 // we'll need this index later; autoindex incantation
-indexKeys = new HashSet()
-indexKeys.add("identity")
-index = g.createAutomaticIndex('name-idx', Vertex.class, indexKeys)
+g.createKeyIndex("identity", Vertex.class)
 
 // created manual index for "related items" api
-sourceEADurlIndex = g.createManualIndex('sourceEADurlIndex', Vertex.class)
+sourceEADurlIndex = g.createIndex('sourceEADurlIndex', Vertex.class)
 
 // first loop; define vertex for each name / EAC file
 dir.eachFile{file->
@@ -83,7 +81,7 @@ dir.eachFile{file->
   // first, get then vertex for this file
   def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
   def from_name = eac.cpfDescription.identity[0].nameEntry[0].part
-  def from_node = index.get("identity", from_name as String)>>1
+  def from_node = g.V("identity", from_name as String).next()
   def from_file = from_node.filename
 
   // now, process all related names
@@ -107,7 +105,7 @@ dir.eachFile{file->
 
     // get the vertex to connect to
     def to_node, to_file
-    to_node_iterator = index.get("identity", to_name as String)
+    to_node_iterator = g.V("identity", to_name as String)
     if ( to_node_iterator ) { 
       to_node = to_node_iterator.next()
       to_file = to_node.filename
