@@ -7,12 +7,11 @@ def env = System.getenv()
 // directory to troll
 def data_root = env['EAC_DIR'] ?: "./data"
 
-// XTF Base URL used in inner loop to look up authorized form of name
-def xtf_base = env['XTF_BASE_URL'] ?: "http://socialarchive.iath.virginia.edu/xtf/search?raw=1&sectionType="
-
+// paths for output files can be set with environmental variables, or use these defaults
 def database_path = env['GRAPH_DB'] ?: "./neo4j-db"
-
-def graphML = env['GRAPH_ML'] ?: "./graph-snac-example.xml"
+def graphML_file = env['GRAPH_ML'] ?: "./graphML.xml"
+def gml_file = env['GRAPH_GML'] ?: "./graph.gml"
+def GraphSON_file = env['GRAPH_JSON'] ?: "./GraphSON.json"
 
 // does the input even exist ?
 def dir = new File(data_root)
@@ -26,6 +25,9 @@ g.createKeyIndex("identity", Vertex.class)
 
 // created manual index for "related items" api
 sourceEADurlIndex = g.createIndex('sourceEADurlIndex', Vertex.class)
+
+// created manual index for "related items" api
+recordIdIndex = g.createIndex('recordId', Vertex.class)
 
 // first loop; define vertex for each name / EAC file
 dir.eachFile{file->
@@ -41,6 +43,8 @@ dir.eachFile{file->
   // def existDates = eac.cpfDescription.description[0].existDates
   def creatorOf = ''
   def referencedIn = ''
+  def recordId = eac.control.recordId[0].text()
+  def otherRecordId = eac.control.otherRecordId.findAll{ it.@localType="mergedCPF" }
   // I happen to know only xlink:role="archivalRecords" have xlink:href's right now
   eac.cpfDescription.relations.resourceRelation.findAll { it."@xlink:href" != '' }.each {  
     if (it."@xlink:arcrole" == "creatorOf") {
@@ -70,6 +74,14 @@ dir.eachFile{file->
   }
   if (viaf != '')          { vertex["viaf"]  = viaf }
   if (dbpedia != '')       { vertex["dbpedia"] = dbpedia as String }
+  if (recordId != '')      { 
+    recordIdIndex.put("recordId", recordId, vertex) 
+  }
+  if (otherRecordId != '') {
+    otherRecordId.each {
+      recordIdIndex.put("recordId", it.text(), vertex) 
+    }
+  }
   print vertex["identity"]
   println vertex
 
@@ -91,24 +103,13 @@ dir.eachFile{file->
     String p = it.descriptiveNote.p
     def recordId = p[10..p.size()-1] // so hackish
 
-    // look up by recordId: first
-    def crossQueryResult = new XmlSlurper().parse("${xtf_base}control&text=${recordId}")
-    def to_name = crossQueryResult.docHit[0].meta.identity[0]
-    def where = "recordId"
-
-    // no luck with recordId?  do a search of the identity sectionType!
-    if ( to_name == '') {
-      crossQueryResult = new XmlSlurper().parse("${xtf_base}identity&text=${it.relationEntry}")
-      to_name = crossQueryResult.docHit[0].meta.identity[0]
-      where = "identity"
-    }
-
-    // get the vertex to connect to
-    def to_node, to_file
-    to_node_iterator = g.V("identity", to_name as String)
+    // get the vertex to connect to using recordId index
+    def to_node, to_file, to_name
+    def to_node_iterator = recordIdIndex.get("recordId", recordId).iterator()
     if ( to_node_iterator ) { 
       to_node = to_node_iterator.next()
       to_file = to_node.filename
+      to_name = to_node.identity
     }
 
     // we'll need to know the edge type 
@@ -128,9 +129,10 @@ dir.eachFile{file->
     // no match found
     } else {
       print "SKIPPED"
-      print "${from_node}|${from_file}|${to_node}|${to_file}|${arcrole}"
+      // print "${from_node}|${from_file}|${to_node}|${to_file}|${arcrole}"
+      print "${from_node}|${from_file}|||${arcrole}"
     }
-    println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId} ${where}"
+    println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId}"
   }
 }
 
@@ -138,11 +140,13 @@ println "compute popularity"
 // pre compute popularity score
 for (z in g.V ) { 
   z.score = z.out.count() 
-  print "${z.score}."
 }
 
-// output a graphML file 
-GraphMLWriter.outputGraph(g, new FileOutputStream(graphML))
+println "output searlized versions"
+// output searlized versions
+GraphMLWriter.outputGraph(g, new FileOutputStream(graphML_file))
+GraphSONWriter.outputGraph(g, new FileOutputStream(gml_file))
+GMLWriter.outputGraph(g, new FileOutputStream(GraphSON_file))
 
 // neo4j likes to be shutdown graceful like
 g.shutdown()
