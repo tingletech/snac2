@@ -1,6 +1,7 @@
 syntax: glob
 data 				# symlink to directory of eac files
 gremlin/*			# git repo of gremlin
+rexster/*
 neo4j-db/*			# neo4j database
 jena-joseki/*                   # git repo of jena-joseki SPARQL server
 graph-snac-example.xml		# too big for revision control
