@@ -3,14 +3,17 @@
 set -eux
 # need these vars defined
 echo $GRAPH_ML
-
-read -p "answer y to blow away the old index? " -n 1
-if [[ ! $REPLY =~ ^[Yy]$ ]]
-then
-    exit 1
-fi
-
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # http://stackoverflow.com/questions/59895
+
+rdf_store=$DIR/rdf/store
+if [[ -e $rdf_store ]]; then
+  read -p "answer y to blow away the old index? " -n 1
+  if [[ ! $REPLY =~ ^[Yy]$ ]]
+  then
+    exit 1
+  fi
+  rm -rf $rdf_store
+fi
 
 cd "$DIR/rdf"
 
