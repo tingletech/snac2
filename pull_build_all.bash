@@ -6,3 +6,6 @@ cd $DIR
 ./pull_jena-joseki.bash
 ./pull_rexster.bash
 ./pull_xtf.bash
+./build_graph.bash 
+./load_jena.bash 
+./index_xtf.bash 
