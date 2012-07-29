@@ -9,3 +9,4 @@ graph-snac-example.xml		# too big for revision control
 store                           # rdflib berkeleydb store
 *.tdb				# jena TDB database
 rexster-extension/target/*
+logs/
