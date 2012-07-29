@@ -6,3 +6,7 @@ cd xtf-cpf
 hg checkout xtf-cpf
 cd WEB-INF
 ant
+cd ..
+echo $EAC_DIR
+ln -s $EAC_DIR data
+./bin/textIndexer -index default
