@@ -1,0 +1,42 @@
+set daemon 30 
+#set logfile syslog facility log_daemon
+set logfile ${DIR}/monit.log
+set mailserver localhost
+set mail-format { from: monit@${HOST} }
+set alert dsc@localhost but not on { instance, action }
+
+set httpd port 2812
+    allow localhost
+    allow 127.0.0.1
+
+check process tomcat_xtf
+    with pidfile "${DIR}/tomcat_xtf.pid"
+    start program = "${DIR}/wrapper_xtf.bash ${HOME}/java/tomcat7/bin/startup.sh"
+    stop program = "${DIR}/wrapper_xtf.bash ${HOME}/java/tomcat7/bin/shutdown.sh"
+    if failed url 
+        http://${HOST}:8080/xtf/search
+        and content == "All Names"
+        and timeout 30 seconds
+    then
+        restart
+
+check process tomcat_tinkerpop
+    with pidfile "${DIR}/tomcat_tinkerpop.pid"
+    start program = "${DIR}/wrapper_tinkerpop.bash ${HOME}/java/tomcat7/bin/startup.sh"
+    stop program = "${DIR}/wrapper_tinkerpop.bash ${HOME}/java/tomcat7/bin/shutdown.sh"
+    if failed url 
+        http://${HOST}:8081/rexster
+        and timeout 30 seconds
+    then
+        restart
+
+check process tomcat_rdf
+    with pidfile "${DIR}/tomcat_rdf.pid"
+    start program = "${DIR}/wrapper_rdf.bash ${HOME}/java/tomcat7/bin/startup.sh"
+    stop program = "${DIR}/wrapper_rdf.bash ${HOME}/java/tomcat7/bin/shutdown.sh"
+    if failed url 
+        http://${HOST}:8082/sparql
+        and content == "SPARQL"
+        and timeout 30 seconds
+    then
+        restart

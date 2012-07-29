@@ -1,7 +1,10 @@
 #!/bin/env bash
-set -eux
+set -eu
 which xsltproc
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # http://stackoverflow.com/questions/59895
+export DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # http://stackoverflow.com/questions/59895
+export HOST=`hostname`
+
+# create tomcat config for each server
 
 xslt="$DIR/xslt"
 
@@ -16,7 +19,6 @@ xsltproc \
   --stringparam listen_port $(($START_LISTEN + $offset))\
   $xslt/generate_config.xslt \
   $xslt/server.xml 
-
 
 offset=1
 xsltproc \
@@ -35,3 +37,20 @@ xsltproc \
   --stringparam listen_port $(($START_LISTEN + $offset))\
   $xslt/generate_config.xslt \
   $xslt/server.xml
+
+# generate monit config file
+perl -p -e 's/\$\{([^}]+)\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' monitrc.template > monitrc
+chmod g-r,o-r monitrc
+
+# create tomcat directories
+
+for confdir in tomcat_xtf tomcat_tinkerpop tomcat_rdf
+  do 
+    mkdir -p $confdir/logs
+    mkdir -p $confdir/work
+    mkdir -p $confdir/temp
+  done
+
+# create monit directory
+mkdir -p $DIR/logs
+

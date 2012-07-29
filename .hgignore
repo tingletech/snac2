@@ -11,3 +11,7 @@ store                           # rdflib berkeleydb store
 rexster-extension/target/*
 logs/
 conf/server.xml
+servers/*.pid
+servers/*.log
+servers/monitrc
+rdf/*.rdf

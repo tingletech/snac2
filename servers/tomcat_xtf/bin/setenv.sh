@@ -1,0 +1,1 @@
+export CATALINA_PID=$CATALINA_BASE.pid
