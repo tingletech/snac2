@@ -10,3 +10,4 @@ store                           # rdflib berkeleydb store
 *.tdb				# jena TDB database
 rexster-extension/target/*
 logs/
+conf/server.xml

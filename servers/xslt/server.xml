@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<Server port="16006" shutdown="SHUTDOWN-tomcat-rdf">
+<Server>
   <!-- Security listener. Documentation at /docs/config/listeners.html
   <Listener className="org.apache.catalina.security.SecurityListener" />
   -->
@@ -21,7 +21,7 @@
   </GlobalNamingResources>
 
   <Service name="Catalina">
-    <Connector port="8082" protocol="HTTP/1.1"
+    <Connector protocol="HTTP/1.1"
                connectionTimeout="20000"
                redirectPort="8443" />
 
