@@ -15,3 +15,6 @@ servers/*.pid
 servers/*.log
 servers/monitrc
 rdf/*.rdf
+snac-neo4j/*
+snac-graph*
+monitrc
