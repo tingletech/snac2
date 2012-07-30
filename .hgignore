@@ -18,3 +18,4 @@ rdf/*.rdf
 snac-neo4j/*
 snac-graph*
 monitrc
+*/work/*
