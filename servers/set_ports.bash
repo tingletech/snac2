@@ -42,7 +42,7 @@ cd $DIR
 
 # generate monit config file
 perl -p -e 's/\$\{([^}]+)\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' monitrc.template > monitrc
-chmod g-r,o-r monitrc
+chmod 700 monitrc
 
 # create tomcat directories
 
