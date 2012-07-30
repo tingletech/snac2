@@ -35,7 +35,7 @@ check process tomcat_rdf
     start program = "${DIR}/wrapper_rdf.bash ${HOME}/java/tomcat7/bin/startup.sh"
     stop program = "${DIR}/wrapper_rdf.bash ${HOME}/java/tomcat7/bin/shutdown.sh"
     if failed url 
-        http://${HOST}:8082/sparql
+        http://${HOST}:8082/sparql/
         and content == "SPARQL"
         and timeout 30 seconds
     then
