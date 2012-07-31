@@ -9,4 +9,6 @@ set -eux
 #fi
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # http://stackoverflow.com/questions/59895
 ln -s $EAC_DIR $DIR/xtf-cpf/data
+ln -s $EAC_RAW_DIR $DIR/xtf-extract/data
 $DIR/xtf-cpf/bin/textIndexer -index default
+$DIR/xtf-extract/bin/textIndexer -index default
