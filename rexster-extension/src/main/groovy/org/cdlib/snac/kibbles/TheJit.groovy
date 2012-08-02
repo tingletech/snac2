@@ -4,14 +4,14 @@ package org.cdlib.snac.kibbles;
 // http://code.google.com/p/xtf-cpf/source/browse/cpf2html/snac-jit.html?name=xtf-cpf
 // http://code.google.com/p/xtf-cpf/source/browse/cpf2html/snac-jit.js?name=xtf-cpf
 
-import com.tinkerpop.blueprints.pgm.Edge;
-import com.tinkerpop.blueprints.pgm.Graph;
-import com.tinkerpop.blueprints.pgm.Vertex;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.rexster.extension.*;
 import com.tinkerpop.rexster.RexsterResourceContext;
 import org.codehaus.jettison.json.JSONObject;
 import org.codehaus.jettison.json.JSONArray;
-// import com.tinkerpop.blueprints.pgm.util.json.GraphSONWriter;
+// import com.tinkerpop.blueprints.util.json.GraphSONWriter;
 import com.tinkerpop.gremlin.groovy.Gremlin;
 import javax.ws.rs.core.Response;
 
