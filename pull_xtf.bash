@@ -9,6 +9,6 @@ ant
 cd ../..
 hg clone https://code.google.com/p/xtf-cpf/ xtf-extract
 cd xtf-extract
-hg checkout xtf-cpf
+hg checkout xtf-cpf-unmerged
 cd WEB-INF
 ant
