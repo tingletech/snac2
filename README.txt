@@ -1,26 +1,34 @@
-eac-load-graph
+eac-graph-load
 ==============
 
 Build process for SNAC website.
+
+Check this out, in, say, your home directory:
+
+```
+hg clone https://code.google.com/p/eac-graph-load/ 
+```
 
 Setup Environment to build, index, and operate
 ----------------------------------------------
 
 ```
-. setenv.bash
+. ~/eac-graph-load/setenv.bash
 ```
 
 Make site in a brand new checked out directory
 ----------------------------------------------
 
 ```
+cd ~/eac-graph-load
 export EAC_DIR=/data/production/data			# merge EAC output
 export EAC_RAW_DIR=/data/production/data-extract	# merge EAC input
 ./make.bash
 ```
 
-Study this script to see how SNAC is built.  It runs other scripts which check out all code, build
-all indexes, and configures the tomcat servers.
+Study ```make.bash``` to see how SNAC is built.  It runs other bash scripts
+which check out all code, build all indexes, and configure the tomcat
+servers.
 
 Requirements
 
@@ -36,13 +44,15 @@ Requirements
 Use monit to stop and start
 ---------------------------
 
+Must source setenv.bash to setup monit alias.
+
 ```
 ./monit				# run with no arguments to start monit daemon
 ./monit start tomcat_xtf
 ./monit start tomcat_tinkerpop
 ./monit start tomcat_rdf
 ```
-
+see monit manual for more information on use of monit.
 
 Apache Setup
 ------------
