@@ -52,6 +52,7 @@ public class TheJit extends AbstractRexsterExtension {
         def node = new JSONObject();
         node.put("id", vertex.id as String);
         node.put("name", vertex.identity);
+        node.put("filename", vertex.filename);
         node.put("adjacencies", buildAdjacencies(vertex, neighbors));
         return node;
     }
