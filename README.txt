@@ -40,6 +40,7 @@ Requirements
  * git in $PATH
  * monit in $PATH
  * apache 2.2
+ * xsltproc in $PATH
 
 Use monit to stop and start
 ---------------------------
