@@ -36,11 +36,14 @@ Requirements
  * java (tested in java7) in $PATH
  * tomcat (tested in tomcat7) at ~/java/tomcat7
  * maven (mvn) in $PATH
+ * ant in $PATH
  * mercurial (hg) in $PATH
  * git in $PATH
  * monit in $PATH
  * apache 2.2
  * xsltproc in $PATH
+ * python in $PATH
+ * rdflib in $PYTHONPATH see ./install_python_libraries.bash
 
 Use monit to stop and start
 ---------------------------
