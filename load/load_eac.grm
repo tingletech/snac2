@@ -35,22 +35,19 @@ dir.eachFile{file->
   // xpath: /eac-cpf/cpfDescription/identity[1]/nameEntry/part
   def fromName = eac.cpfDescription.identity[0].nameEntry[0].part
   def entityType = eac.cpfDescription.identity[0].entityType
-  def viafFunk = eac.control.otherRecordId.findAll{ it.@localType == 'VIAFId' }[0].text()
-  def viaf = viafFunk.replaceFirst(/VIAFId:/, "http://viaf.org/viaf/")
-  def dbpedia = eac.control.otherRecordId.findAll{ it.@localType == 'dbpedia' }[0].text()
-  dbpedia = dbpedia.replaceFirst(/dbpedia:/, "")
+  // eac.cpfDescription.control.sources.source now has VIAF and worldcat links
     
   // def existDates = eac.cpfDescription.description[0].existDates
   def creatorOf = ''
   def referencedIn = ''
   def recordId = eac.control.recordId[0].text()
   def otherRecordId = eac.control.otherRecordId.findAll{ it.@localType="mergedCPF" }
-  // I happen to know only xlink:role="archivalRecords" have xlink:href's right now
+  // I happen to know only xlink:role="archivalRecords" have xlink:href's right now (SNAC1)
   eac.cpfDescription.relations.resourceRelation.findAll { it."@xlink:href" != '' }.each {  
-    if (it."@xlink:arcrole" == "creatorOf") {
+    if (it."@xlink:arcrole".toString().contains("creatorOf")) {
       creatorOf = creatorOf + it."@xlink:href" + "\n"
     }
-    if (it."@xlink:arcrole" == "referencedIn") {
+    if (it."@xlink:arcrole".toString().contains("referencedIn")) {
       referencedIn = referencedIn + it."@xlink:href" + "\n"
     }
   }
@@ -72,8 +69,6 @@ dir.eachFile{file->
       sourceEADurlIndex.put("referencedIn", it, vertex)
     }
   }
-  if (viaf != '')          { vertex["viaf"]  = viaf }
-  if (dbpedia != '')       { vertex["dbpedia"] = dbpedia as String }
   if (recordId != '')      { 
     recordIdIndex.put("recordId", recordId, vertex) 
   }
@@ -90,7 +85,7 @@ dir.eachFile{file->
 // second loop; create the edges
 dir.eachFile{file->
 
-  // first, get then vertex for this file
+  // first, get the vertex for this file
   def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
   def from_name = eac.cpfDescription.identity[0].nameEntry[0].part
   def from_node = g.V("identity", from_name as String).next()
@@ -99,9 +94,7 @@ dir.eachFile{file->
   // now, process all related names
   eac.cpfDescription.relations.cpfRelation.each {
 
-    // parse the recordId out of the descriptiveNote
-    String p = it.descriptiveNote.p
-    def recordId = p[10..p.size()-1] // so hackish
+    def recordId = it."@xlink:href"
 
     // get the vertex to connect to using recordId index
     def to_node, to_file, to_name
@@ -124,7 +117,6 @@ dir.eachFile{file->
       e["to_file"] = to_file as String
       e["from_name"] = from_name as String
       e["from_file"] = from_file as String
-      e["pre_merge_record_id"] = recordId as String
 
     // no match found
     } else {
