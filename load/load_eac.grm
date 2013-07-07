@@ -40,14 +40,18 @@ dir.eachFile{file->
   // def existDates = eac.cpfDescription.description[0].existDates
   def creatorOf = ''
   def referencedIn = ''
+  def sameAs = ''
   def recordId = eac.control.recordId[0].text()
   def otherRecordId = eac.control.otherRecordId.findAll{ it.@localType="mergedCPF" }
-  eac.cpfDescription.relations.resourceRelation.findAll { it."@xlink:href" != '' }.each {  
+  eac.cpfDescription.relations."*".findAll { it."@xlink:href" != '' }.each {  
     if (it."@xlink:arcrole".toString().contains("creatorOf")) {
       creatorOf = creatorOf + it."@xlink:href" + "\n"
     }
     if (it."@xlink:arcrole".toString().contains("referencedIn")) {
       referencedIn = referencedIn + it."@xlink:href" + "\n"
+    }
+    if (it."@xlink:arcrole".toString().contains("sameAs")) {
+      sameAs = sameAs + it."@xlink:href" + "\n"
     }
   }
   Vertex vertex = g.addVertex(null)
@@ -77,6 +81,9 @@ dir.eachFile{file->
     // vertex["otherRecordId"] = otherRecordId
       recordIdIndex.put("recordId", it.text(), vertex) 
     }
+  }
+  if (sameAs != '') {
+    vertex["sameAs"]  = sameAs.tokenize("\n") 
   }
   print vertex["identity"]
   println vertex
