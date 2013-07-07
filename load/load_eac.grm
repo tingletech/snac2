@@ -70,10 +70,12 @@ dir.eachFile{file->
     }
   }
   if (recordId != '')      { 
+    vertex["recordId"] = recordId
     recordIdIndex.put("recordId", recordId, vertex) 
   }
   if (otherRecordId != '') {
     otherRecordId.each {
+    // vertex["otherRecordId"] = otherRecordId
       recordIdIndex.put("recordId", it.text(), vertex) 
     }
   }
