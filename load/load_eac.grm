@@ -42,7 +42,6 @@ dir.eachFile{file->
   def referencedIn = ''
   def recordId = eac.control.recordId[0].text()
   def otherRecordId = eac.control.otherRecordId.findAll{ it.@localType="mergedCPF" }
-  // I happen to know only xlink:role="archivalRecords" have xlink:href's right now (SNAC1)
   eac.cpfDescription.relations.resourceRelation.findAll { it."@xlink:href" != '' }.each {  
     if (it."@xlink:arcrole".toString().contains("creatorOf")) {
       creatorOf = creatorOf + it."@xlink:href" + "\n"
@@ -58,13 +57,13 @@ dir.eachFile{file->
   // there has got to be a better way?
   // if (existDates != '') { vertex["existDates"] = existDates as String }
   if (creatorOf != '')     { 
-    vertex["creatorOf"]  = creatorOf 
+    vertex["creatorOf"]  = creatorOf.tokenize("\n") 
     creatorOf.tokenize("\n").each {
       sourceEADurlIndex.put("creatorOf", it, vertex)
     }
   }
   if (referencedIn != '')  { 
-    vertex["referencedIn"]  = referencedIn 
+    vertex["referencedIn"]  = referencedIn.tokenize("\n") 
     referencedIn.tokenize("\n").each {
       sourceEADurlIndex.put("referencedIn", it, vertex)
     }
