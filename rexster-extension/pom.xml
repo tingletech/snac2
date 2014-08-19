@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.cdlib</groupId>
     <artifactId>snac-kibbles</artifactId>
-    <version>2.1-SNAPSHOT</version>
+    <version>2.5.0</version>
     <packaging>jar</packaging>
     <url>http://socialarchive.iath.virginia.edu/</url>
     <name>Rexster Extensions for the SNAC project</name>
@@ -25,17 +25,17 @@ blah blah blah
         <dependency>
             <groupId>com.tinkerpop.blueprints</groupId>
             <artifactId>blueprints-core</artifactId>
-            <version>2.1.0-SNAPSHOT</version>
+            <version>2.5.0</version>
         </dependency>
         <dependency>
             <groupId>com.tinkerpop.rexster</groupId>
             <artifactId>rexster-core</artifactId>
-            <version>2.1.0-SNAPSHOT</version>
+            <version>2.5.0</version>
         </dependency>
         <dependency>
            <groupId>com.tinkerpop.gremlin</groupId>
            <artifactId>gremlin-groovy</artifactId>
-           <version>2.1.0-SNAPSHOT</version>
+           <version>2.5.0</version>
         </dependency>
 
         <dependency>
