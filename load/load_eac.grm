@@ -88,22 +88,24 @@ dir.eachFile{file->
   }
   print vertex["identity"]
   println vertex
-
+  g.commit()
 }
+
+println "end of first loop"
 
 // second loop; create the edges
 dir.eachFile{file->
 
   // first, get the vertex for this file
   def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
-  def from_name = eac.cpfDescription.identity[0].nameEntry[0].part
-  def from_node = g.V("identity", from_name as String).next()
+  def from_recordId = eac.control.recordId[0].text()
+  def from_node = g.V("recordId", from_recordId as String).next()
+  def from_name = from_node.identity
   def from_file = from_node.filename
-  def from_recordId = from_node.recordId
+  print from_node
 
   // now, process all related names
   eac.cpfDescription.relations.cpfRelation.each {
-
     def recordId = it."@xlink:href"
 
     // get the vertex to connect to using recordId index
@@ -124,17 +126,17 @@ dir.eachFile{file->
       def e = g.addEdge(null, from_node, to_node, arcrole as String)
 
       // and add some properties to the edge
-      e["arcrole"] = arcrole as String
       e["to_name"] = to_name as String
       e["to_recordId"] = to_recordId as String
       e["from_name"] = from_name as String
       e["from_recordId"] = from_recordId as String
-    println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId}"
+      println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId}"
+      g.commit()
 
     // no match found
     } else if (to_node && to_file) {
       print "SKIPPED"
-      print "${from_node}|${from_file}|${to_node}|${to_file}|${arcrole}"
+      println "${from_node}|${from_file}|${to_node}|${to_file}|${arcrole}"
     }
   }
 }
