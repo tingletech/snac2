@@ -1,5 +1,11 @@
 // groovy / gremlin script to load EAC-CPF relations into a graph database
 
+def batch(graph, counter) {
+  if (counter % 1000 == 0) {
+    graph.commit()
+  }
+}
+
 // set EAC_DIR XTF_BASE_URL GRAPH_DB GRAPH_ML
 
 def env = System.getenv()
@@ -29,7 +35,7 @@ sourceEADurlIndex = g.createIndex('sourceEADurlIndex', Vertex.class)
 // created manual index for "related items" api
 recordIdIndex = g.createIndex('recordId', Vertex.class)
 
-loopCounter = 0
+batchCounter = 1
 
 // first loop; define vertex for each name / EAC file
 dir.eachFile{file->
@@ -90,15 +96,11 @@ dir.eachFile{file->
   }
   print vertex["identity"]
   println vertex
-  loopCounter++
-  if (loopCounter % 1000 == 0) {
-    g.commit()
-  }
+  batch(g, batchCounter++)
 }
 
 println "end of first loop"
 
-loopCounter = 0
 // second loop; create the edges
 dir.eachFile{file->
 
@@ -137,10 +139,7 @@ dir.eachFile{file->
       e["from_name"] = from_name as String
       e["from_recordId"] = from_recordId as String
       println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId}"
-      loopCounter++
-      if (loopCounter % 1000 == 0) {
-        g.commit()
-      }
+      batch(g, batchCounter++)
 
     // no match found
     } else if (to_node && to_file) {
