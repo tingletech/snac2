@@ -29,6 +29,8 @@ sourceEADurlIndex = g.createIndex('sourceEADurlIndex', Vertex.class)
 // created manual index for "related items" api
 recordIdIndex = g.createIndex('recordId', Vertex.class)
 
+loopCounter = 0
+
 // first loop; define vertex for each name / EAC file
 dir.eachFile{file->
   def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
@@ -88,11 +90,15 @@ dir.eachFile{file->
   }
   print vertex["identity"]
   println vertex
-  g.commit()
+  loopCounter++
+  if (loopCounter % 1000 == 0) {
+    g.commit()
+  }
 }
 
 println "end of first loop"
 
+loopCounter = 0
 // second loop; create the edges
 dir.eachFile{file->
 
@@ -131,7 +137,10 @@ dir.eachFile{file->
       e["from_name"] = from_name as String
       e["from_recordId"] = from_recordId as String
       println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId}"
-      g.commit()
+      loopCounter++
+      if (loopCounter % 1000 == 0) {
+        g.commit()
+      }
 
     // no match found
     } else if (to_node && to_file) {
@@ -146,6 +155,7 @@ println "compute popularity"
 for (z in g.V ) { 
   z.score = z.out.count() 
 }
+g.commit()
 
 println "output searlized versions"
 // output searlized versions
