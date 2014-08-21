@@ -59,13 +59,24 @@ public class TheJit extends AbstractRexsterExtension {
 
     // build array of adjacent nodes
     private buildAdjacencies(vertex, neighbors) {
-        JSONArray collect = new JSONArray();
+        JSONObject bylabel = new JSONObject();
+
+
+        // put myself into an array
         def self = [];
         vertex.aggregate(self).iterate();
-        vertex.both.dedup().retain(neighbors).except(self).each {
-            collect.put(it.id as String);
+
+        // loop over all the edge types
+        vertex.bothE.label.dedup().each{
+            // collect all the adjacent nodes with this edge type
+            JSONArray collect = new JSONArray();
+            vertex.both(it).dedup().retain(neighbors).except(self).each {
+                collect.put(it.id as String);
+            };
+            bylabel.put(it as String, collect);
         };
-        return collect;
+
+        return bylabel;
     }
 
 }
