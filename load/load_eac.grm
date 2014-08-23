@@ -1,11 +1,5 @@
 // groovy / gremlin script to load EAC-CPF relations into a graph database
 
-def batch(graph, counter) {
-  if (counter % 1000 == 0) {
-    graph.commit()
-  }
-}
-
 // set EAC_DIR XTF_BASE_URL GRAPH_DB GRAPH_ML
 
 def env = System.getenv()
@@ -18,27 +12,28 @@ def database_path = env['GRAPH_DB'] ?: "./neo4j-db"
 def graphML_file = env['GRAPH_ML'] ?: "./graphML.xml"
 def gml_file = env['GRAPH_GML'] ?: "./graph.gml"
 def GraphSON_file = env['GRAPH_JSON'] ?: "./GraphSON.json"
+def BATCH_SIZE = 10000
 
 // does the input even exist ?
 def dir = new File(data_root)
 if (!(dir.exists()) ){ println data_root + " not found"; System.exit(1) }
 
 // create graph
-def g = new Neo4jGraph(database_path)
+def base = new Neo4jGraph(database_path)
 
-// we'll need this index later; autoindex incantation
-g.createKeyIndex("identity", Vertex.class)
+base.createKeyIndex('identity', Vertex.class)
+base.createKeyIndex('sourceEADurlIndex', Vertex.class)
+base.createKeyIndex('recordId', Vertex.class)
 
-// created manual index for "related items" api
-g.createKeyIndex('sourceEADurlIndex', Vertex.class)
+g = new BatchGraph(base, VertexIDType.STRING, BATCH_SIZE);
+g.setVertexIdKey('recordId');
+g.setLoadingFromScratch(false);
 
-// created manual index for "related items" api
-g.createKeyIndex('recordId', Vertex.class)
-
-batchCounter = 1
+vCount = 0
 
 // first loop; define vertex for each name / EAC file
 dir.eachFile{file->
+  vCount++
   def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
   // xpath: /eac-cpf/cpfDescription/identity[1]/nameEntry/part
   def fromName = eac.cpfDescription.identity[0].nameEntry[0].part
@@ -62,13 +57,11 @@ dir.eachFile{file->
       sameAs = sameAs + it."@xlink:href" + "\n"
     }
   }
-  Vertex vertex = g.addVertex(null)
+  Vertex vertex = g.addVertex(recordId as String)
   vertex["filename"] = file.getName()
   vertex["identity"] = fromName as String
   vertex["entityType"] = entityType as String
-  vertex["recordId"] = recordId as String
-  // there has got to be a better way?
-  // if (existDates != '') { vertex["existDates"] = existDates as String }
+ 
   if (creatorOf != '')     { 
     vertex["creatorOf"]  = creatorOf.tokenize("\n") 
   }
@@ -86,73 +79,66 @@ dir.eachFile{file->
   if (sameAs != '') {
     vertex["sameAs"]  = sameAs.tokenize("\n") 
   }
+  print vCount
   print vertex["identity"]
   println vertex
-  batch(g, batchCounter++)
 }
 
-g.commit()
-
 println "end of first loop"
+vCount = 0
+eCount = 0
 
 // second loop; create the edges
 dir.eachFile{file->
 
+  vCount++
   // first, get the vertex for this file
   def eac = new XmlSlurper().parse(file).declareNamespace(xlink: 'http://www.w3.org/1999/xlink')
   def from_recordId = eac.control.recordId[0].text()
-  def from_node = g.V("recordId", from_recordId as String).next()
-  def from_name = from_node.identity
-  def from_file = from_node.filename
-  println from_node
+  def from_name = eac.cpfDescription.identity[0].nameEntry[0].part
 
   // now, process all related names
   eac.cpfDescription.relations.cpfRelation.each {
-    def recordId = it."@xlink:href"
-
-    // get the vertex to connect to using recordId index
-    def to_node, to_file, to_name
-    def to_node_iterator = g.V("recordId", recordId)
-    if ( to_node_iterator ) { 
-      to_node = to_node_iterator.next()
-      to_file = to_node.filename
-      to_name = to_node.identity
-    }
-
+    def to_recordId = it."@xlink:href"
     def arcrole = it."@xlink:arcrole"
-    
-    // we we can create an edge; then do so
-    if ( from_node && to_node && arcrole && (from_node != to_node) ) {
+    def to_name = it."relationEntry"
+
+    from_node = g.getVertex(from_recordId as String)
+    to_node = g.getVertex(to_recordId as String)
+
+    if (to_node) {
+      eCount++ 
       def e = g.addEdge(null, from_node, to_node, arcrole as String)
 
       // and add some properties to the edge
-      e["to_name"] = to_name as String
-      e["to_recordId"] = recordId as String
-      e["from_name"] = from_name as String
-      e["from_recordId"] = from_recordId as String
-      println "\"${from_name}\" ${arcrole} \"${to_name}\"; ${recordId}"
-      batch(g, batchCounter++)
-
-    // no match found
-    } else if (to_node && to_file) {
-      print "SKIPPED"
-      println "${from_node}|${from_file}|${to_node}|${to_file}|${arcrole}"
+      e.setProperty("to_name", to_name as String)
+      e.setProperty("to_recordId", to_recordId as String)
+      e.setProperty("from_name", from_name as String)
+      e.setProperty("from_recordId", from_recordId as String)
+      println "\"${vCount}, ${eCount} ${from_name}\" ${arcrole} \"${to_name}\"; ${from_recordId}->${to_recordId}"
     }
+
   }
 }
 
+
 println "compute popularity"
 // pre compute popularity score
-for (z in g.V ) { 
+def counter = 1
+for (z in base.V ) { 
   z.score = z.out.count() 
+  if (counter % BATCH_SIZE == 0) {
+    base.commit()
+  }
 }
-g.commit()
+base.commit()
 
 println "output searlized versions"
 // output searlized versions
-GraphMLWriter.outputGraph(g, new FileOutputStream(graphML_file))
-GraphSONWriter.outputGraph(g, new FileOutputStream(GraphSON_file))
-GMLWriter.outputGraph(g, new FileOutputStream(gml_file))
+GraphMLWriter.outputGraph(base, new FileOutputStream(graphML_file))
+GraphSONWriter.outputGraph(base, new FileOutputStream(GraphSON_file))
+GMLWriter.outputGraph(base, new FileOutputStream(gml_file))
 
+println "shutdown"
 // neo4j likes to be shutdown graceful like
-g.shutdown()
+base.shutdown()
