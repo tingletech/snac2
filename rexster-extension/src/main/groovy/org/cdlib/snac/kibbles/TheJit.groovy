@@ -53,14 +53,14 @@ public class TheJit extends AbstractRexsterExtension {
         node.put("id", vertex.id as String);
         node.put("name", vertex.identity);
         node.put("filename", vertex.filename);
-        node.put("adjacencies", buildAdjacencies(vertex, neighbors));
+        buildAdjacencies(node, vertex, neighbors);
         return node;
     }
 
     // build array of adjacent nodes
-    private buildAdjacencies(vertex, neighbors) {
+    private buildAdjacencies(node, vertex, neighbors) {
         JSONObject bylabel = new JSONObject();
-
+        JSONArray adj_coll = new JSONArray();
 
         // put myself into an array
         def self = [];
@@ -69,14 +69,16 @@ public class TheJit extends AbstractRexsterExtension {
         // loop over all the edge types
         vertex.bothE.label.dedup().each{
             // collect all the adjacent nodes with this edge type
-            JSONArray collect = new JSONArray();
+            JSONArray coll = new JSONArray();
             vertex.both(it).dedup().retain(neighbors).except(self).each {
-                collect.put(it.id as String);
+                coll.put(it.id as String);
+                adj_coll.put(it.id as String);
             };
-            bylabel.put(it as String, collect);
+            bylabel.put(it as String, coll);
         };
 
-        return bylabel;
+        node.put("adjacencies", adj_coll);
+        node.put("bylabel", bylabel);
     }
 
 }
